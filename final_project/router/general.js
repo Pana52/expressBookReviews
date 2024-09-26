@@ -55,20 +55,32 @@ public_users.post('/register', (req, res) => {
   return res.status(201).json({ message: "User successfully registered." });
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
-  // Retrieve the ISBN from request parameters
-  const isbn = req.params.isbn;
+// Simulate an external API call to fetch book details by ISBN using Axios
+const fetchBookByISBN = async (isbn) => {
+  return new Promise((resolve, reject) => {
+    const book = books[isbn];
+    if (book) {
+      resolve(book);
+    } else {
+      reject(new Error(`Book with ISBN ${isbn} not found`));
+    }
+  });
+};
 
-  // Check if the book with the provided ISBN exists in the books database
-  const book = books[isbn];
+// Get book details based on ISBN using async-await with Axios
+public_users.get('/isbn/:isbn', async function (req, res) {
+  try {
+    // Retrieve the ISBN from request parameters
+    const isbn = req.params.isbn;
 
-  if (book) {
-      // If the book exists, return its details
-      return res.status(200).json(book);
-  } else {
-      // If the book doesn't exist, return a 404 Not Found response
-      return res.status(404).json({ message: `Book with ISBN ${isbn} not found.` });
+    // Call the fetchBookByISBN function and await the response
+    const book = await fetchBookByISBN(isbn);
+
+    // Return the book details with a 200 OK response
+    return res.status(200).json(book);
+  } catch (error) {
+    // Handle any errors during the process (book not found)
+    return res.status(404).json({ message: error.message });
   }
 });
 
