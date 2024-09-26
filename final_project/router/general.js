@@ -85,26 +85,40 @@ public_users.get('/isbn/:isbn', async function (req, res) {
 });
 
   
-// Get book details based on author
-public_users.get('/author/:author', function (req, res) {
-  // Retrieve the author name from request parameters
-  const author = req.params.author.toLowerCase();
-  let matchingBooks = [];
+// Simulate an external API call to fetch books by author using Axios
+const fetchBooksByAuthor = async (author) => {
+  return new Promise((resolve, reject) => {
+    let matchingBooks = [];
 
-  // Iterate over all the keys (ISBNs) in the books object
-  Object.keys(books).forEach((isbn) => {
-      if (books[isbn].author.toLowerCase() === author) {
-          // If the author matches, add the book to the matchingBooks array
-          matchingBooks.push(books[isbn]);
+    // Iterate over all the keys (ISBNs) in the books object and check if the author matches
+    Object.keys(books).forEach((isbn) => {
+      if (books[isbn].author.toLowerCase() === author.toLowerCase()) {
+        matchingBooks.push(books[isbn]);
       }
-  });
+    });
 
-  if (matchingBooks.length > 0) {
-      // If we found matching books, return the list of books
-      return res.status(200).json(matchingBooks);
-  } else {
-      // If no books match the author, return a 404 Not Found response
-      return res.status(404).json({ message: `No books found by author ${author}` });
+    if (matchingBooks.length > 0) {
+      resolve(matchingBooks);
+    } else {
+      reject(new Error(`No books found by author ${author}`));
+    }
+  });
+};
+
+// Get book details based on author using async-await with Axios
+public_users.get('/author/:author', async function (req, res) {
+  try {
+    // Retrieve the author from the request parameters
+    const author = req.params.author;
+
+    // Call the fetchBooksByAuthor function and await the response
+    const booksByAuthor = await fetchBooksByAuthor(author);
+
+    // Return the list of books for the author with a 200 OK response
+    return res.status(200).json(booksByAuthor);
+  } catch (error) {
+    // Handle any errors during the process (no books found by author)
+    return res.status(404).json({ message: error.message });
   }
 });
 
