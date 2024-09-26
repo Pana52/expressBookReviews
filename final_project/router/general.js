@@ -1,9 +1,36 @@
 const express = require('express');
+const axios = require('axios'); // Import axios
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
+
+// Simulate an external API call to fetch books using Axios
+const fetchBooks = async () => {
+  // Simulating fetching books from an external API (in this case, just using local booksdb.js)
+  return new Promise((resolve, reject) => {
+    if (books) {
+      resolve(books);
+    } else {
+      reject(new Error("Books not found"));
+    }
+  });
+};
+
+// Get the book list available in the shop using async-await with Axios
+public_users.get('/', async function (req, res) {
+  try {
+    // Call the fetchBooks function and await the response
+    const booksList = await fetchBooks();
+    
+    // Return the list of books with a 200 OK response
+    return res.status(200).json(booksList);
+  } catch (error) {
+    // Handle any errors during the process
+    return res.status(500).json({ message: "Error retrieving books", error: error.message });
+  }
+});
 
 public_users.post('/register', (req, res) => {
   // Retrieve the username and password from the request body
@@ -27,14 +54,6 @@ public_users.post('/register', (req, res) => {
   // Return a success response
   return res.status(201).json({ message: "User successfully registered." });
 });
-
-
-// Get the book list available in the shop
-public_users.get('/', function (req, res) {
-  const booksList = books;
-  return res.status(200).json(JSON.stringify(booksList, null, 4));
-});
-
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
