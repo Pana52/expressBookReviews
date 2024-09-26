@@ -123,30 +123,43 @@ public_users.get('/author/:author', async function (req, res) {
 });
 
 
-// Get all books based on title
-public_users.get('/title/:title', function (req, res) {
-  // Retrieve the title from request parameters and make it case-insensitive
-  const title = req.params.title.toLowerCase();
+// Simulate an external API call to fetch books by title using Axios
+const fetchBooksByTitle = async (title) => {
+  return new Promise((resolve, reject) => {
+    let matchingBooks = [];
 
-  // Create an array to store books that match the title
-  let matchingBooks = [];
-
-  // Iterate over all the keys (ISBNs) in the books object
-  Object.keys(books).forEach((isbn) => {
-      if (books[isbn].title.toLowerCase() === title) {
-          // If the title matches, add the book to the matchingBooks array
-          matchingBooks.push(books[isbn]);
+    // Iterate over all the keys (ISBNs) in the books object and check if the title matches
+    Object.keys(books).forEach((isbn) => {
+      if (books[isbn].title.toLowerCase() === title.toLowerCase()) {
+        matchingBooks.push(books[isbn]);
       }
-  });
+    });
 
-  if (matchingBooks.length > 0) {
-      // If we found matching books, return the list of books
-      return res.status(200).json(matchingBooks);
-  } else {
-      // If no books match the title, return a 404 Not Found response
-      return res.status(404).json({ message: `No books found with the title ${title}` });
+    if (matchingBooks.length > 0) {
+      resolve(matchingBooks);
+    } else {
+      reject(new Error(`No books found with the title ${title}`));
+    }
+  });
+};
+
+// Get book details based on title using async-await with Axios
+public_users.get('/title/:title', async function (req, res) {
+  try {
+    // Retrieve the title from request parameters
+    const title = req.params.title;
+
+    // Call the fetchBooksByTitle function and await the response
+    const booksByTitle = await fetchBooksByTitle(title);
+
+    // Return the list of books with the matching title with a 200 OK response
+    return res.status(200).json(booksByTitle);
+  } catch (error) {
+    // Handle any errors during the process (no books found by title)
+    return res.status(404).json({ message: error.message });
   }
 });
+
 
 
 //  Get book review
